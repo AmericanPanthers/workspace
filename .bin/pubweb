@@ -1,0 +1,91 @@
+#!/bin/bash
+##
+# Simple wrapper for doing things with pubweb--it makes many assumptions.
+# Run "pubweb -h" to learn more.
+##
+. "$(dirname "$0")/lib.sh"
+
+# HACK: Support running on github
+command_present torify || torify() { command "$@"; }
+ 
+# Primary script logic
+main() {
+	parse_options "$@"
+ 
+	echo "$SPHINX_ACTION"
+	case "$SPHINX_ACTION" in
+		'build') build_site;;
+		'view') view_site;;
+		*) die 'Invalid pubweb action';;
+	esac
+}
+ 
+# Read options into environment
+parse_options() {
+	# Defaults
+	export SPHINX_ACTION="$SPHINX_ACTION"
+	export SPHINX_ROOT="${SPHINX_ROOT:-$HOME/Persistent/shared/pubweb}"
+	export LOG_LEVEL="${LOG_LEVEL:-1}"
+ 
+	while getopts 'bvr:l:h' OPT; do
+		case "$OPT" in
+			b) SPHINX_ACTION='build';;
+			v) SPHINX_ACTION='view';;
+			r) SPHINX_ROOT="$OPTARG";;
+			l) LOG_LEVEL="$OPTARG";;
+			h) show_help; exit 1;;
+			*) die 'Unexpected argument provided';;
+		esac
+	done
+}
+ 
+# Show help text (an explanation of options)
+show_help() {
+	t="$(printf '\t')"
+	cat <<-EOF
+	Open or close a LUKS volume with separated headers.
+ 
+	Usage: crypt [options] <target>
+ 
+	Options:
+	  -b${t}Build site using an expected PyEnv
+	  -v${t}View site with at expected location using falkon
+	  -r${t}Location of "pubweb" directory
+	  -l X${t}Log level (0=Debug, 1=Info, 2=Warn, 3=Error)
+	  -h${t}Print this help text and exit
+	EOF
+}
+
+
+##
+# PubWeb Functions
+##
+
+# Creates ~/Persistent/.PyEnv with pubweb dependencies
+make_pyenv() {
+	[ -e "$HOME/Persistent/.PyEnv" ] && return 0
+	python3 -m venv "$HOME/Persistent/.PyEnv" || return 1
+	torify "$HOME/Persistent/.PyEnv/bin/pip" install sphinx sphinx-breeze-theme || return 1
+	return 0
+}
+
+# Build static website in "_publish/" directory
+build_site() {
+	make_pyenv
+	"$HOME/Persistent/.PyEnv/bin/sphinx-build" \
+		--quiet --exception-on-warning \
+		"$SPHINX_ROOT" "$SPHINX_ROOT/_publish"
+}
+
+# Open produced website using falkon
+# This browser is insecure on Tails OS and allows local web view.
+view_site() {
+	falkon --private-browsing --no-extensions \
+		"$SPHINX_ROOT/_publish/index.html" &>/dev/null &
+}
+ 
+##
+# Script Kickoff
+##
+ 
+main "$@"

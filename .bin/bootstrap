@@ -1,0 +1,228 @@
+#!/bin/sh
+##
+# Prepare or Resume your workspace on top of Tails OS.
+#
+# NOTE: If this was opened as a text file, close (X), and
+# then reopen using Right Click > Run as Program.
+##
+
+# Directories for bootstrap process
+WORKSPACE_ROOT="${WORKSPACE_ROOT:-$HOME/Persistent/shared}"
+BOOTSTRAP_FILES="$WORKSPACE_ROOT/.bin/bootstrap_files"
+
+
+# Main script logic
+main() {
+	log "$INFO" 'Preparing desktop...'
+
+	# Help with Tor connection
+	if ! check_tor; then
+		log "$INFO" 'Connecting to the tor network is essential!'
+	       	systemctl --user start tca
+		log "$INFO" 'Waiting until connected...'
+		while ! check_tor; do sleep 20s; done
+	fi
+
+	# Other safety checks
+	safety_checks || die 'Safety Checks Failed'
+
+	# Collect supplemential (workspace) files
+	clone_workspace || die 'Failed to clone git repository!'
+
+	# Desktop environment
+	copy_defaults || die 'File setup failed'
+	configure_desktop || log "$WARN" 'Desktop setup ran into problems'
+
+	# Extra desktop customization
+	customize_desktop || log "$WARN" 'Desktop setup ran into problems'
+
+	# Install important software
+	install_extras || die 'Package installation failed!'
+
+	# Create a helpful symlink to run script after next reboot
+	if [ ! -e "$HOME/Persistent/RESUME" ]; then
+		ln -sf "$HOME/Persistent/shared/.bin/bootstrap" "$HOME/Persistent/RESUME"
+	fi
+
+	# Let user know process is complete
+	log "$INFO" 'Workspace has been prepared!\n*   (close this window and support others)'
+}
+
+# Clone public git repository
+clone_workspace() {
+	if [ ! -e "$WORKSPACE_ROOT" ]; then
+		log "$INFO" 'Collecting a copy of our workspace data'
+		git clone 'https://github.com/AmericanPanthers/workspace.git' "$WORKSPACE_ROOT"
+	fi
+}
+
+# Install Extra Software
+install_extras() {
+	if [ "$(dpkg -l | grep -cE '^ii\s+(yubikey-personalization|python3-venv|falkon)\b')" -ne 3 ]; then
+		log "$INFO" 'Installing important software; this will require your temporary Admin massword'
+		sudo apt update
+
+		clear; log "$WARN" 'When prompted, choose "Install Every Time"'
+		sudo apt install -y yubikey-personalization terminator vim python3-venv falkon
+	fi
+}
+
+# Install Default Files
+# This should be limited to essentials (may already be overkill)
+copy_defaults() {
+	install "$BOOTSTRAP_FILES/bashrc" "$HOME/.bashrc"
+	install "$BOOTSTRAP_FILES/vimrc" "$HOME/.vimrc"
+	install "$BOOTSTRAP_FILES/user-dirs.dirs" "$HOME/.config/user-dirs.dirs"
+	install -D "$BOOTSTRAP_FILES/keepassxc.ini" "$HOME/.config/keepassxc/keepassxc.ini"
+	install -D "$BOOTSTRAP_FILES/terminator.config" "$HOME/.config/terminator/config"
+	for vimdir in backup swap undo; do mkdir -p "$HOME/.vim/tmp/$vimdir"; done
+}
+
+# Clean up the GUI (primary focus is lay users)
+configure_desktop() {
+	# Undo touchcreen-style scrolling
+	gsettings set org.gnome.desktop.peripherals.touchpad natural-scroll false
+
+	# Redundant and/or "surprising" to lay users
+	gsettings set org.gnome.desktop.interface enable-hot-corners false
+	gsettings set org.gnome.shell.app-switcher current-workspace-only true
+
+	# Obfuscates list of active applications
+	gsettings set org.gnome.desktop.wm.keybindings switch-windows "['<Alt>Tab']"
+	gsettings set org.gnome.desktop.wm.keybindings switch-windows-backward "['<Shift><Alt>Tab']"
+
+	# Disable F1 (easy to trigger another "surprise")
+	gsettings set org.gnome.settings-daemon.plugins.media-keys help "[]"
+
+	# Conflicts with other applications
+	gsettings set org.gnome.desktop.wm.keybindings toggle-maximized "[]"
+	gsettings set org.gnome.desktop.wm.keybindings unmaximize "[]"
+	gsettings set org.gnome.desktop.wm.keybindings maximize "[]"
+	gsettings set org.gnome.mutter.keybindings toggle-tiled-left "[]"
+	gsettings set org.gnome.mutter.keybindings toggle-tiled-right "[]"
+}
+
+# Load any other user-related settings
+customize_desktop() {
+	# Create default configuration
+	if [ ! -e "$HOME/Persistent/.customize_desktop" ]; then
+		#gpg --list-secret-keys | grep TODO
+		cat >"$HOME/Persistent/.customize_desktop" <<-EOF
+		# Set a preferred background (our sample reduces your anonymity)
+		#dconf write /org/gnome/desktop/background/picture-uri "'file://$BOOTSTRAP_FILES/wallpaper.jpg'"
+
+		# Configure git to use gpg
+		[user]
+			name = $TODO_READKEY
+			email = $TODO_READKEY
+			signingkey = $TODO_READKEY
+		[push]
+			default = simple
+		[http]
+			sslverify = true
+		[commit]
+			gpgsign = true
+		[pull]
+			rebase = true
+		EOF
+		chmod +x "$HOME/Persistent/.customize_desktop"
+	fi
+	"$HOME/Persistent/.customize_desktop"
+}
+
+
+##
+# Safety Checks
+##
+
+# Ensure Tails OS is loaded and environment is ready for workspace things.
+safety_checks() {
+	errors=0
+
+	check_tails	|| errors="$((errors+1))"
+	check_tor	|| errors="$((errors+1))"
+	check_savedir	|| errors="$((errors+1))"
+
+	# Return total number of encountered problems
+	return "$errors"
+}
+
+# Return True if Tails is currently running
+check_tails() {
+	if [ -f '/live/overlay/rw/usr/share/keyrings/whisperback-keyring.gpg' ]; then
+		return 0
+	fi
+	log "$ERROR" 'Tails OS does not appear to be running; this is unwise.'
+	return 1
+}
+
+# Return True if Tor is currently connected
+check_tor() {
+	if torify curl --silent https://check.torproject.org | grep -q 'Congratulations.'; then
+		return 0
+	fi
+	log "$ERROR" 'Tor does not appear to be connected.'
+	return 1
+}
+
+# Return True if Persistent directory is mounted
+check_savedir() {
+	if mountpoint --quiet "$HOME/Persistent"; then
+		return 0
+	fi
+	log "$ERROR" 'Persistent directory is not mounted'
+	return 1
+}
+
+
+##
+# lib.sh
+# Copy/pasted to ensure this script is 100% self-contained.
+##
+
+# Log Levels
+DEBUG=0; INFO=1; WARN=2; ERROR=3
+readonly DEBUG INFO WARN ERROR
+export DEBUG INFO WARN ERROR
+
+# Print a formatted message if env[LOG_LEVEL] >= level.
+log() {
+        if [ "${LOG_LEVEL:-1}" -le "$1" ]; then
+                case "$1" in
+                        (0) _lvl='DEBUG';;
+                        (1) _lvl='INFO';;
+                        (2) _lvl='WARN';;
+                        (3) _lvl='ERROR';;
+                        (*) _lvl='UNKNOWN';;
+                esac
+
+        	printf '***\n* %s: %b\n***\n' "$_lvl" "$2"
+        fi
+}
+
+# Print a formatted (critical) message and exit with status.
+die() {
+        # If first argument was an integer, use as exit_status
+        case "$1" in
+                (*[!0123456789]*) _exit_status=1;;
+                (*) _exit_status="$1"; shift;;
+        esac
+
+        printf '***\n* CRITICAL: %b\n* %s\n***\n' "$1" \
+		'Run script again to retry!'
+        exit "$_exit_status"
+}
+
+
+##
+# Start Script
+##
+
+# Extra verbosity for debug logging
+[ "${LOG_LEVEL:-1}" -eq 0 ] && set -x
+
+# Prevent execution with arguments
+[ -n "$1" ] && die 'This script does not support arguments.'
+
+# Kick off
+main

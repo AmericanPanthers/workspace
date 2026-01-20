@@ -1,0 +1,6 @@
+# Misc
+vault/mnt
+pubweb/_publish
+
+# Vim
+*.swp

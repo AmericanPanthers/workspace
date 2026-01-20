@@ -1,0 +1,148 @@
+#!/bin/bash
+##
+# Script to unlock password vaults.
+# For this to work, the first yk key slot must be configured
+# with challenge-response/hmac-sha1. Keys should require touch
+# to generate the derived key (after entering password).
+##
+. "$(dirname "$0")/lib.sh"
+ 
+# Primary script logic
+main() {
+	parse_options "$@"
+ 
+	case "$CRYPT_ACTION" in
+		'open') unlock_crypt;;
+		'close') lock_crypt;;
+		'print') show_key;;
+		*) die 'Invalid crypt action';;
+	esac
+}
+ 
+# Read options into environment
+parse_options() {
+	# Defaults
+	export CRYPT_TARGET="$CRYPT_TARGET"
+	export CRYPT_ACTION="$CRYPT_ACTION"
+	export CRYPT_ROOT="$HOME/Persistent/shared/vault"
+	export LOG_LEVEL="${LOG_LEVEL:-1}"
+ 
+	while getopts 'ocpr:l:h' OPT; do
+		case "$OPT" in
+			o) CRYPT_ACTION='open';;
+			c) CRYPT_ACTION='close';;
+			p) CRYPT_ACTION='print';;
+			r) CRYPT_ROOT="$OPTARG";;
+			l) LOG_LEVEL="$OPTARG";;
+			h) show_help; exit 1;;
+			*) die 'Unexpected argument provided';;
+		esac
+	done
+	# First positional argument should be our target
+	CRYPT_TARGET="${*:$OPTIND:1}"
+}
+ 
+# Show help text (an explanation of options)
+show_help() {
+	t="$(printf '\t')"
+	cat <<-EOF
+	Open or close a LUKS volume with separated headers.
+ 
+	Usage: crypt [options] <target>
+ 
+	Options:
+	  -o${t}Unlock (open) a volume
+	  -c${t}Lock (close) a volume
+	  -p${t}Print a ykchalresp-derived key and exit
+	  -r${t}Base directory for cryptographic vaults
+	  -l X${t}Log level (0=Debug, 1=Info, 2=Warn, 3=Error)
+	  -h${t}Print this help text and exit
+	EOF
+}
+ 
+# Build password soup, pass to cryptsetup, and mount unlocked volume
+unlock_crypt() {
+	# Verify it is not already opened and mounted
+	mountpoint -q "$CRYPT_ROOT/mnt/$CRYPT_TARGET" && return 0
+ 
+	# Verify both header and crypt exist
+	[[ -f "$CRYPT_ROOT/data/$CRYPT_TARGET" ]] || die 'named crypt not found'
+	[[ -f "$CRYPT_ROOT/headers/$CRYPT_TARGET" ]] || die 'named headers not found'
+ 
+	# Open volume
+	if ! [[ -e "/dev/mapper/$CRYPT_TARGET" ]]; then
+		load_key || die 'Failed to find derived key'
+ 
+		# Send password soup to cryptsetup to unlock/open luks volume
+		log "$DEBUG" 'Attempting to open volume with assembled key'
+		/usr/bin/printf '%s' "$luks_pass" | sudo /sbin/cryptsetup \
+			open "$CRYPT_ROOT/data/$CRYPT_TARGET" \
+			--header "$CRYPT_ROOT/headers/$CRYPT_TARGET" \
+			"$CRYPT_TARGET" -d -
+ 
+		# Housekeeping
+		command unset luks_pass
+		[[ -e "/dev/mapper/$CRYPT_TARGET" ]] || die 'unable to unlock crypt'
+	fi
+ 
+	# Mount volume
+	if [[ ! -d "$CRYPT_ROOT/mnt/$CRYPT_TARGET" ]]; then
+		log "$INFO" "Missing mountpoint destination; creating directory"
+		mkdir "$CRYPT_ROOT/mnt/$CRYPT_TARGET"
+	fi
+	sudo /bin/mount "/dev/mapper/$CRYPT_TARGET" "$CRYPT_ROOT/mnt/$CRYPT_TARGET" ||
+		die 'unable to mount volume'
+}
+
+# Print the a key derived from HMAC
+show_key() {
+	load_key || die 'Failed to find derived key'
+	echo "$luks_pass"
+	command unset luks_pass
+}
+
+# Get actual key from password+yubikey
+load_key() {
+	log "$DEBUG" "Getting password soup for $CRYPT_TARGET"
+	user_pass="$(/usr/bin/zenity --password \
+		--title='crypt key' \
+		--timeout=30)"
+	pwhash1="$(/usr/bin/sha512sum <<<"panther$user_pass" | cut -d ' ' -f 1)"
+	pwhash2="$(/usr/bin/sha256sum <<<"armor$user_pass" | cut -d ' ' -f 1)"
+	luks_pass="$pwhash1$user_pass$(sudo /usr/bin/ykchalresp -1 "$pwhash2")"
+	command unset user_pass pwhash1 pwhash2
+}
+
+# Ensure a volume hase been "safely" unmounted
+lock_crypt() {
+	# A list of known processes to watch out for (all fatal)
+	case "$CRYPT_TARGET" in
+		'vault') _pcheck 'keepassxc';;
+		*) :;;
+	esac
+ 
+	# Unmount volume
+	if mountpoint -q "$CRYPT_ROOT/mnt/$CRYPT_TARGET"; then
+		sudo /bin/umount "$CRYPT_ROOT/mnt/$CRYPT_TARGET" || die 'unmount volume failed'
+	fi
+ 
+	# Close volume
+	if [[ -e "/dev/mapper/$CRYPT_TARGET" ]]; then
+		sudo /sbin/cryptsetup close "$CRYPT_TARGET" || die 'cryptsetup close failed'
+	fi
+ 
+}
+ 
+# Loop through a list of processes and return non-zero if any are running
+_pcheck() {
+	for proc in "$@"; do
+		[[ "$(pgrep -x "$proc")" ]] && die "Unexpected process running: $proc"
+	done
+}
+ 
+ 
+##
+# Script Kickoff
+##
+ 
+main "$@"

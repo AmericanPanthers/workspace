@@ -1,0 +1,13 @@
+/* Reduce Clutter: Hide from casual view but leave in source */
+.bz-footer-copyright p:last-child {
+  display: none;
+}
+
+/* Avoid breaking apart numbered lists */
+article dl, article ol, article ul {
+  margin-bottom: 0;
+  margin-top: 0;
+}
+article dd>:last-child {
+  margin-bottom: 0.25rem;
+}
