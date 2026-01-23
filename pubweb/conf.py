@@ -1,7 +1,7 @@
 project = 'American Panthers'
 copyright = '2026, American Panthers'
 author = 'American Panthers'
-html_title = 'Amercan Panthers'
+html_title = 'American Panthers'
 lang = 'en'
 
 heart_svg = '''
