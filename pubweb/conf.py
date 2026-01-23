@@ -14,19 +14,21 @@ html_static_path = ['_static']
 html_css_files = ['custom.css']
 html_theme = 'breeze'
 html_context = {
-    'github_user': 'AmericanPanthers',
-    'github_repo': 'workspace',
-    'github_version': 'main',
-    'doc_path': 'pubweb',
+    # upstream bug
+    'github_user': "None",
+    'github_repo': "None",
 }
 html_theme_options = {
+    "sidebar_secondary": [
+        "sidebar-toc.html",
+    ],
     "external_links": [
         {
             "name": "Get Involved",
             "url": "TO-DO",
             "html": heart_svg,
         },
-    ]
+    ],
 }
 
 #extensions = []

@@ -1,0 +1,40 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  publish:
+    name:  Publish Updates
+    runs-on: codeberg-tiny-lazy
+    env:
+      SPHINX_ROOT: ./pubweb
+    steps:
+      # Prepare
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update;
+          sudo apt-get install -y shellcheck python3-venv
+
+      # Lint Checks
+      - name: Run shellcheck
+        # https://github.com/koalaman/shellcheck/wiki/SC1091
+        run: |
+          shellcheck -e SC1091 $(grep -rl --exclude-dir=.git '^#!.*sh' .)
+
+      # Build Website
+      - name: Run sphinx-build
+        run: ./.bin/pubweb -b
+
+      # Publish Website
+      - name: Push to Cloudflare
+        # https://github.com/cloudflare/wrangler-action/issues/386
+        uses: https://github.com/cloudflare/wrangler-action@v3.12.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy --project-name=americanpanthers-workspace ./pubweb/_publish

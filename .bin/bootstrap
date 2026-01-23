@@ -158,7 +158,7 @@ check_tails() {
 
 # Return True if Tor is currently connected
 check_tor() {
-	if torify curl --silent https://check.torproject.org | grep -q 'Congratulations.'; then
+	if torify curl https://check.torproject.org | grep -q 'Congratulations.'; then
 		return 0
 	fi
 	log "$ERROR" 'Tor does not appear to be connected.'

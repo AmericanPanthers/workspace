@@ -1,9 +1,6 @@
 name: CI/CD
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
@@ -12,23 +9,24 @@ jobs:
 
   shellcheck:
     name:  ShellCheck
-    runs-on: ubuntu-latest
+    runs-on: codeberg-tiny-lazy
     steps:
       - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update; sudo apt-get install -y shellcheck
       - name: Run shellcheck
-        uses: ludeeus/action-shellcheck@master
-        env:
-          SHELLCHECK_OPTS: -e SC1091
-          # https://github.com/koalaman/shellcheck/wiki/SC1091
+        # https://github.com/koalaman/shellcheck/wiki/SC1091
+        run: |
+          shellcheck -e SC1091 $(grep -rl --exclude-dir=.git '^#!.*sh' .)
 
   buildsite:
     name: Build Website
-    runs-on: ubuntu-latest
+    runs-on: codeberg-tiny-lazy
     env:
       SPHINX_ROOT: ./pubweb
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
-        run: sudo apt install -y python3-venv
+        run: sudo apt-get update; sudo apt-get install -y python3-venv
       - name: Run sphinx-build
         run: ./.bin/pubweb -b

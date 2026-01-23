@@ -17,5 +17,4 @@ Our Tools
    - Used to create "digital signature" that proves your ownership of a virtual identity
    - Supports a "web of trust" that allows trusted members to show their trust for other members
    - The web allows us to quickly remove multiple bad actors
-- GitHub: Amazing anti-spam without requiring a phone number
-- Gitlab: Similar to GitHub
+- Codeberg: Excellent collaboration platform without excessive captchas
