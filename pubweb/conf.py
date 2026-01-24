@@ -1,5 +1,5 @@
 project = 'American Panthers'
-copyright = '2026, American Panthers'
+copyright = '2026, American Panthers; This work is licensed under CC BY-SA 4.0'
 author = 'American Panthers'
 html_title = 'American Panthers'
 lang = 'en'
