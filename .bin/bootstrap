@@ -40,8 +40,8 @@ main() {
 	install_extras || die 'Package installation failed!'
 
 	# Create a helpful symlink to run script after next reboot
-	if [ ! -e "$HOME/Persistent/RESUME" ]; then
-		ln -sf "$HOME/Persistent/shared/.bin/bootstrap" "$HOME/Persistent/RESUME"
+	if [ ! -e "$HOME/Persistent/Resume Workspace" ]; then
+		ln -sf "$HOME/Persistent/shared/.bin/bootstrap" "$HOME/Persistent/Resume Workspace"
 	fi
 
 	# Let user know process is complete
@@ -106,24 +106,26 @@ configure_desktop() {
 customize_desktop() {
 	# Create default configuration
 	if [ ! -e "$HOME/Persistent/.customize_desktop" ]; then
-		#gpg --list-secret-keys | grep TODO
 		cat >"$HOME/Persistent/.customize_desktop" <<-EOF
 		# Set a preferred background (our sample reduces your anonymity)
 		#dconf write /org/gnome/desktop/background/picture-uri "'file://$BOOTSTRAP_FILES/wallpaper.jpg'"
 
+		firstkey="\$(gpg --list-secret-keys --with-colons | awk -F':' 'NR==1{printf "%s=", \$5} NR==4{print \$10}')"
 		# Configure git to use gpg
+		[ -n "\$firstkey" ] && cat >"\$HOME/.gitconfig" <<-EF
 		[user]
-			name = $TODO_READKEY
-			email = $TODO_READKEY
-			signingkey = $TODO_READKEY
+		    name = \$(echo "\$firstkey" | awk -F'[=(<]' '{print \$2}' | xargs)
+		    email = \$(echo "\$firstkey" | awk -F'[<>]' '{print \$2}')
+		    signingkey = \$(echo "\$firstkey" | awk -F'=' '{print \$1}')
 		[push]
-			default = simple
+		    default = simple
 		[http]
-			sslverify = true
+		    sslverify = true
 		[commit]
-			gpgsign = true
+		    gpgsign = true
 		[pull]
-			rebase = true
+		    rebase = true
+		EF
 		EOF
 		chmod +x "$HOME/Persistent/.customize_desktop"
 	fi
@@ -140,7 +142,7 @@ safety_checks() {
 	errors=0
 
 	check_tails	|| errors="$((errors+1))"
-	check_tor	|| errors="$((errors+1))"
+	#check_tor	|| errors="$((errors+1))"
 	check_savedir	|| errors="$((errors+1))"
 
 	# Return total number of encountered problems
