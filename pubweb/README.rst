@@ -38,8 +38,8 @@ All changes happen in three stages:
 1. Open ``.rst`` files in a text editor, make changes, and then save the file
 2. Build the new site, using ``pubweb -b`` and view with ``pubweb -v``
     - If ``falkon`` is already running, it will automatically reload after making changes
-3. Push your changes to Codeberg (will auto-fork) and create a ``Pull Request``
-    - Codeberg will provide instructions for this in response to failed ``commit+push``
+3. Push your changes to GitHub (will auto-fork) and create a ``Pull Request``
+    - GitHub will provide instructions for this in response to failed ``commit+push``
 
 To learn more about making content changes:
 

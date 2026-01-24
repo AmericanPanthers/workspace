@@ -9,12 +9,12 @@ jobs:
 
   publish:
     name:  Publish Updates
-    runs-on: codeberg-tiny-lazy
+    runs-on: ubuntu-latest
     env:
       SPHINX_ROOT: ./pubweb
     steps:
       # Prepare
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install dependencies
         run: |
           sudo apt-get update;
@@ -32,8 +32,7 @@ jobs:
 
       # Publish Website
       - name: Push to Cloudflare
-        # https://github.com/cloudflare/wrangler-action/issues/386
-        uses: https://github.com/cloudflare/wrangler-action@v3.12.0
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

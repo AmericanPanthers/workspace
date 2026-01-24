@@ -59,7 +59,7 @@ Copy Our Tools
     4. OR: Top ``Super (Windows)`` key > type ``cons`` > Tap ``Enter``
 8. Copy and paste (or carefully type) this text into the black window::
 
-    curl -Ss https://codeberg.org/AmericanPanthers/workspace/raw/branch/main/.bin/bootstrap | sh
+    curl -Ss https://raw.githubusercontent.com/americanpanthers/workspace/main/.bin/bootstrap | sh
 
 9. Double check caps (only the first S), punctuation, and spacing, then press ``Enter``
 10. Follow the on-screen instructions

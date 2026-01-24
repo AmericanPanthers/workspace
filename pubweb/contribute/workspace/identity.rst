@@ -30,8 +30,8 @@ Tor Network    Privacy         People
 Email          Authorization   People/Project
 GPG            Authentication  People/Project
 SSH            Authentication  People/Project
-Codeberg       Authorization   Project
-Codeberg       Accounting      Project
+GitHub         Authorization   Project
+GitHub         Accounting      Project
 =============  ==============  ==============
 
 You may also wish to read more about the
@@ -283,36 +283,37 @@ from the key creation process.
 
 .. _account-git:
 
-Create Your Codeberg Account
------------------------------
+Create Your GitHub Account
+--------------------------
 
 Although :ref:`git` itself is decentralized, it is extremely helpful to have a centralized
-service like Codeberg. This provides AAA (Authentication, Authorization, and Accounting)
+service like GitHub. This provides AAA (Authentication, Authorization, and Accounting)
 that makes it easier to collaborate safely, with protection against spam and bad actors.
 
-1. Go to https://codeberg.org/
+1. Go to https://github.com/
 2. Follow the account creation process
-3. We recommend making the following account changes (at https://codeberg.org/user/settings)
+3. We recommend making the following account changes (at https://github.com/settings/profile)
 
-    1. User visibility: **Limited**
-    2. **Check**:  Hide activity from profile page
-    3. Click the "Update profile" button to save
+    1. **Check**: Make profile private and hide activity
+    2. Click the "Update preferences" button below this checkbox
+    3. **Uncheck**: Show Achievements on my profile
+    4. Click the "Update preferences" button below this checkbox
 
-4. Upload your ``SSH`` Key to: https://codeberg.org/user/settings/keys
+4. Upload your ``SSH`` Key to: https://github.com/settings/keys
 
-    1. Click "Add Key" next to "Manage SSH Keys"
+    1. Click "New SSH Key"
     2. Open ``Console``
     3. Run ``cat ~/.ssh/id_ed25519.pub``::
 
         amnesia@amnesia:~$ cat ~/.ssh/id_ed25519.pub
         ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIET0zknbWnxAT1m5kcUF54yFxdWC+ZeJeHSizWKKWNDN iamwitness12341111@webmail.com
 
-    4. Copy and paste the line that follows your command (starting with "ssh") into the "Content" section
-    5. Click the big "Add key" button below what you just pasted
+    4. Copy and paste the line that follows your command (starting with "ssh") into the web browser
+    5. Provide an optional title and click "Add SSH Key"
 
-5. Upload your ``GPG`` Key to: https://codeberg.org/user/settings/keys
+5. Upload your ``GPG`` Key to: https://github.com/settings/keys
 
-    1. Click "Add Key" next to "Manage GPG Keys"
+    1. Click "New GPG Key"
     2. Open ``Console``
     3. Run ``gpg --armor --export <keyID-or-Email>``::
 
@@ -335,14 +336,13 @@ that makes it easier to collaborate safely, with protection against spam and bad
     4. Copy and paste the line that follows your command (including all dashes) into the web browser
     5. Provide an optional title and click "Add GPG Key"
 
-6. Both SSH and GPG have additional (and optional) Verify steps:
-    - For both, you can copy/paste the command into Console, enter your password, and provide the result
+6. We recommend checking "Flag unsigned commits as unverified" (will automatically save)
 
-That's it! Your Codeberg account is now created, and it has all the security tokens
+That's it! Your GitHub account is now created, and it has all the security tokens
 required to prove ownership of your identity, even though the identity is entirely
 anonymous.
 
-If we ever need to leave Codeberg, you will be able to keep these security tokens and
+If we ever need to leave GitHub, you will be able to keep these security tokens and
 use them to prove your identity on any future replacement. You can even change your
 email address and username, and the GPG Key ID will be enough to verify any link to
 your old email/username...unless you follow this process and start completely fresh.
