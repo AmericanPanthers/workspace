@@ -109,7 +109,7 @@ load_key() {
 		--timeout=30)"
 	pwhash1="$(/usr/bin/sha512sum <<<"panther$user_pass" | cut -d ' ' -f 1)"
 	pwhash2="$(/usr/bin/sha256sum <<<"armor$user_pass" | cut -d ' ' -f 1)"
-	luks_pass="$pwhash1$user_pass$(sudo /usr/bin/ykchalresp -1 "$pwhash2")"
+	luks_pass="$pwhash1$user_pass$(/usr/bin/ykchalresp -1 "$pwhash2")"
 	command unset user_pass pwhash1 pwhash2
 }
 
