@@ -24,7 +24,7 @@ main() {
 parse_options() {
 	# Defaults
 	export SPHINX_ACTION="$SPHINX_ACTION"
-	export SPHINX_ROOT="${SPHINX_ROOT:-$HOME/Persistent/shared/pubweb}"
+	export SPHINX_ROOT="${SPHINX_ROOT:-$HOME/workspace/shared/pubweb}"
 	export LOG_LEVEL="${LOG_LEVEL:-1}"
  
 	while getopts 'bvr:l:h' OPT; do

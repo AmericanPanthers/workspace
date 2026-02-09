@@ -1,3 +1,34 @@
+
+/* Front Page Table: compare-mid */
+.compare-mid td:first-child {
+  background-color: color-mix(in oklab, var(--bz-color-blue) 25%, var(--bz-color-surface-4));
+}
+.compare-mid td:nth-child(2) {
+  /*background-color: color-mix(in oklab, var(--sd-color-secondary-highlight) 25%, var(--bz-color-surface-4));*/
+  background-color: color-mix(in oklab, var(--bz-color-green-5) 25%, var(--bz-color-surface-4));
+}
+.compare-mid td:last-child {
+  background-color: color-mix(in oklab, var(--bz-color-red) 25%, var(--bz-color-surface-4));
+}
+div.compare-mid {
+  margin-bottom: 0px;
+}
+
+/* Front Page Table: compare-far */
+div.compare-far {
+  margin-top: 0px;
+}
+.compare-far td:first-child {
+  background-color: color-mix(in oklab, var(--bz-color-blue-1) 50%, var(--bz-color-surface-5));
+}
+.compare-far td:nth-child(2) {
+  background-color: var(--bz-color-black);
+  color: var(--bz-color-white);
+}
+.compare-far td:last-child {
+  background-color: color-mix(in oklab, var(--bz-color-red-1) 50%, var(--bz-color-surface-3));
+}
+
 /* Reduce Clutter: Hide from casual view but leave in source */
 .bz-footer-copyright p:last-child {
   display: none;

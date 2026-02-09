@@ -1,7 +1,7 @@
 .. _contribute:
 
-Contributing Safely
-===================
+Take Action
+===========
 
 .. toctree::
    :caption: Important Information
@@ -10,6 +10,12 @@ Contributing Safely
    General Advice <advice/general>
    Online Identities <advice/identities>
    Trust Our Choices <advice/toolset>
+
+.. toctree::
+   :caption: Power to People
+   :hidden:
+
+   Empower Communities <empower/communities>
 
 .. toctree::
    :caption: Our Shared Workspace
@@ -32,5 +38,17 @@ for healing and cooperation. We must carefully evaluate different viewpoints and
 make every effort to find the middle ground. We encourage healthy debate from
 this middle ground--not from the extremes.
 
-Above all else, our goal is to enable safe and effective communication between
-groups of people who would not typically mix.
+Collaboration
+-------------
+
+We must ensure safe and effective communication between groups of people who
+would not typically mix amidst tyranny seeking to destroy and control.
+
+Action Plan
+-----------
+
+TODO
+
+- :ref:`Empower Communities <communities>`: Build strong community networks
+- Strategic Resistance: Coordinate campaigns against oppressive systems
+- Institutional Reform: Working within existing structures to create lasting change
